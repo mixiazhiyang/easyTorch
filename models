@@ -1,0 +1,207 @@
+import torch
+import torch.nn as nn
+
+
+class Dense(nn.Module):
+    def __init__(self, label_size, activation=None):
+        super().__init__()
+        self.label_size = label_size
+        self.activation = activation
+        self.linear = None
+
+    def forward(self, x):
+        if not isinstance(self.linear, nn.Module):
+            self.linear = nn.Linear(x.shape[-1], self.label_size)
+        x = self.linear(x)
+        if self.activation is not None:
+            x = self.activation(x)
+        return x
+
+
+class Conv1d(nn.Module):
+    def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, padding=None, dilation=None,
+                 groups=None, bias=None, padding_mode=None):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.groups = groups
+        self.bias = bias
+        self.padding_mode = padding_mode
+        self.conv = None
+
+    def forward(self, x):
+        # x:[N,C,L]
+        if not isinstance(self.conv, nn.Module):
+            if self.in_channels is None:
+                in_channels = x.shape[1]
+            else:
+                in_channels = self.in_channels
+            self.in_channels = in_channels
+            self.conv = nn.Conv1d(in_channels=self.in_channels,
+                                  out_channels=self.out_channels,
+                                  kernel_size=self.kernel_size,
+                                  stride=self.stride,
+                                  padding=self.padding,
+                                  dilation=self.dilation,
+                                  groups=self.groups,
+                                  bias=self.bias,
+                                  padding_mode=self.padding_mode)
+        x = self.conv(x)
+        return x
+
+
+class Conv2d(nn.Module):
+    def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, padding=None, dilation=1,
+                 groups=1, bias=True, padding_mode='zeros'):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.groups = groups
+        self.bias = bias
+        self.padding_mode = padding_mode
+        self.conv = None
+
+    def forward(self, x):
+        # x:[N,C,L1]
+        if not isinstance(self.conv, nn.Module):
+            if self.in_channels is None:
+                in_channels = x.shape[1]
+            else:
+                in_channels = self.in_channels
+            self.in_channels = in_channels
+            self.conv = nn.Conv2d(in_channels=self.in_channels,
+                                  out_channels=self.out_channels,
+                                  kernel_size=self.kernel_size,
+                                  stride=self.stride,
+                                  padding=self.padding,
+                                  dilation=self.dilation,
+                                  groups=self.groups,
+                                  bias=self.bias,
+                                  padding_mode=self.padding_mode)
+        x = self.conv(x)
+        return x
+
+
+class Convd(nn.Module):
+    def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, padding=None, dilation=None,
+                 groups=None, bias=None, padding_mode=None):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.groups = groups
+        self.bias = bias
+        self.padding_mode = padding_mode
+        self.conv = None
+
+    def forward(self, x):
+        # x:[N,C,L or L1,L2] 可三维可二维
+        if not isinstance(self.conv, nn.Module):
+            if self.in_channels is None:
+                in_channels = x.shape[1]
+            else:
+                in_channels = self.in_channels
+            self.in_channels = in_channels
+            if len(x.shape) == 3:
+                self.conv = nn.Conv1d(in_channels=self.in_channels,
+                                      out_channels=self.out_channels,
+                                      kernel_size=self.kernel_size,
+                                      stride=self.stride,
+                                      padding=self.padding,
+                                      dilation=self.dilation,
+                                      groups=self.groups,
+                                      bias=self.bias,
+                                      padding_mode=self.padding_mode)
+            elif len(x.shape) == 4:
+                self.conv = nn.Conv2d(in_channels=self.in_channels,
+                                      out_channels=self.out_channels,
+                                      kernel_size=self.kernel_size,
+                                      stride=self.stride,
+                                      padding=self.padding,
+                                      dilation=self.dilation,
+                                      groups=self.groups,
+                                      bias=self.bias,
+                                      padding_mode=self.padding_mode)
+
+        x = self.conv(x)
+        return x
+
+
+class PReLU(nn.Module):
+    def __init__(self, num_parameters=None, init: float = 0.25):
+        super().__init__()
+        self.num_parameters = num_parameters
+        self.init = init
+        self.act = None
+
+    def forward(self, x):
+        if not isinstance(self.act, nn.Module):
+            if self.num_parameters is None:
+                num_parameters = x.shape[1]
+            else:
+                num_parameters = self.num_parameters
+            self.num_parameters = num_parameters
+            self.act = nn.PReLU(self.num_parameters, self.init)
+        x = self.act(x)
+        return x
+
+
+class LSTM(nn.Module):
+    def __init__(self, input_size=None, hidden_size=None, num_layers=1, bias=True, batch_first=True, dropout=0,
+                 bidirectional=False, proj_size=0,have_memory=True):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bias = bias
+        self.batch_first = batch_first
+        self.dropout = dropout
+        self.bidirectional = bidirectional
+        self.proj_size = proj_size
+        self.lstm = None
+        self.have_memory = have_memory# True的话，就是会记录h和c，一直流传下去
+        self.h=0
+        self.c=0
+
+    def forward(self, x):
+        if not isinstance(self.lstm, nn.Module):
+            if self.input_size is None:
+                input_size = x.shape[-1]
+            else:
+                input_size = self.input_size
+            self.input_size = input_size
+            if self.hidden_size is None:
+                self.hidden_size = self.input_size
+            self.lstm = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers,
+                                bias=self.bias, batch_first=self.batch_first, dropout=self.dropout,
+                                bidirectional=self.bidirectional, proj_size=self.proj_size)
+        if self.have_memory:
+            if isinstance(self.h, int) and isinstance(self.c, int):
+                x, (self.h, self.c) = self.lstm(x)
+            else:
+                x,(self.h,self.c) = self.lstm(x,(self.h,self.c))
+            # h和c  [1,N,E]
+            # print(self.h.shape,self.c.shape,123)
+        else:
+            x = self.lstm(x)
+        return x
+
+
+
+if __name__ == '__main__':
+
+    model1=LSTM()
+    x=torch.zeros([3,2,5])
+    y=model1(x)
+    print(y.shape)
